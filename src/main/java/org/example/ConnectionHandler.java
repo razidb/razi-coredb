@@ -1,16 +1,33 @@
 package org.example;
 
 import java.net.Socket;
+import java.io.IOException;
+import java.io.DataInputStream;
+import java.io.BufferedInputStream;
 
 public class ConnectionHandler extends Thread {
     private Socket client;
     private boolean exit;
 
-    ConnectionHandler(Socket client){
-        client = client;
+    ConnectionHandler(Socket client) throws IOException {
+        this.client = client;
         // this msg will be printed only when a client is connected
         System.out.println("connect with client on " + client);
         exit = false;
+
+        DataInputStream in = new DataInputStream(
+            new BufferedInputStream(client.getInputStream())
+        );
+
+        System.out.println(
+            Server
+                .dbController
+                .getDatabase("test")
+                .getCollection("test")
+                .find("username", "mahdyhamad")
+        );
+
+        // request -> Query Parser Layer -> Access Control Layer -> Data layer;
     }
 
     @Override
