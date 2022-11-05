@@ -1,0 +1,14 @@
+{
+  "_type": "COLLECTION",
+  "indexes": ["_id", "username"],
+  "documents": [
+    {
+      "_id": "aa153923-c399-41f0-a291-1985106e33f2",
+      "username": "admin",
+      "password": "123",
+      "roles": [
+        "superuser"
+      ]
+    }
+  ]
+}

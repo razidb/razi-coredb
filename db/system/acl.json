@@ -1,0 +1,25 @@
+{
+    "_type": "acl",
+    "accessControlEntries": [
+        {
+            "resource": {
+                "type": "collection",
+                "Inode": 29518593
+            },
+            "owner": {
+                "_type": "user",
+                "id": ""
+            },
+            "permissions": [
+                {
+                    "permission": "READ",
+                    "permit": ["aa153923-c399-41f0-a291-1985106e33f2"]
+                },
+                {
+                    "permission": "WRITE",
+                    "permit": []
+                }
+            ]
+        }
+    ]
+}
