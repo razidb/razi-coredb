@@ -2,7 +2,7 @@ package bst;
 
 import java.util.ArrayList;
 
-public class Node <Key extends Comparable, Value>{
+public class Node <Key extends Comparable<Key>, Value>{
     public Key key;
     public Value value;
     public int height;

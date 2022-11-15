@@ -29,7 +29,6 @@ public class Database {
 
     public Collection getCollection(String name){
         for (Collection collection: collections){
-            System.out.println(collection.getName());
             if ((name + ".json").equals(collection.getName()))
                 return collection;
         }

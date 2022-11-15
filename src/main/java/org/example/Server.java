@@ -2,6 +2,7 @@ package org.example;
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 
 import auth.AuthManager;
 import auth.AuthController;
@@ -40,6 +41,11 @@ public class Server{
             System.out.println("Could not listen on port: " + port);
             System.out.println(e.getMessage());
             System.exit(-1);
+        }
+        catch (Exception syntaxException){
+            System.out.println("Invalid syntax: " + syntaxException.getMessage());
+            System.out.println(Arrays.toString(syntaxException.getStackTrace()));
+
         }
     }
 }
