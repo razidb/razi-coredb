@@ -9,7 +9,7 @@ public class SelectOperation extends BaseOperation {
     WhereClause whereClause = null;
     LimitClause limitClause = null;
 
-    public SelectOperation(Operations type) {
+    public SelectOperation(MainOperations type) {
         super(type);
     }
 

@@ -169,6 +169,7 @@ public class CollectionFileController {
     public ArrayList<JSONObject> getIndexes() throws IOException, ParseException {
         JSONParser parser = new JSONParser();
         JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
+        JSONObject defaultIndex = new JSONObject();
         return (ArrayList<JSONObject>) collection.getOrDefault("indexes", null);
 
     }

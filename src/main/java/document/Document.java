@@ -26,4 +26,8 @@ public class Document {
         }
     }
 
+    @Override
+    public String toString() {
+        return this.data.toString();
+    }
 }

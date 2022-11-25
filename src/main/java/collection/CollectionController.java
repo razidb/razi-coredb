@@ -14,8 +14,9 @@ import java.util.Vector;
 public class CollectionController {
     String name;
     String path;
-    CollectionFileController fileController;
     Vector<Index> indexes;
+    Index<String, Document> mainIndex;
+    CollectionFileController fileController;
 
     private final String MULTI_FIELD_INDEX_VALUES_SEPARATOR = "-";
 
@@ -41,12 +42,22 @@ public class CollectionController {
     private void loadIndexes() throws IOException, ParseException {
         // get indexed fields from collection file
         ArrayList<JSONObject> indexesFromFile = fileController.getIndexes();
+
         for (JSONObject indexFromFile : indexesFromFile) {
-            ArrayList<String> fields = (ArrayList<String>) indexFromFile.getOrDefault("fields", new ArrayList<>());
-            if (fields == null)
-                continue;
-            Index<String, Document> index = new Index<>(fields);
-            this.indexes.add(index);
+            String indexName = (String) indexFromFile.getOrDefault("name", "");
+            if (Objects.equals(indexName, "default")){
+                // create default index
+                ArrayList<String> mainIndexFields = new ArrayList<>();
+                mainIndexFields.add("_id");
+                this.mainIndex = new Index<>(mainIndexFields);
+            }
+            else{
+                ArrayList<String> fields = (ArrayList<String>) indexFromFile.getOrDefault("fields", new ArrayList<>());
+                if (fields == null)
+                    continue;
+                Index<String, Document> index = new Index<>(fields);
+                this.indexes.add(index);
+            }
         }
     }
 
@@ -58,6 +69,10 @@ public class CollectionController {
         for (Object o : documentsFromFile) {
             JSONObject documentObject = (JSONObject) o;
             Document document = new Document(documentObject.get("_id").toString(), documentObject.toJSONString());
+
+            // insert the document in the main index
+            this.mainIndex.bst.Insert(document.getId(), document);
+            // iterate over user-defined indexes
             for (Index index : indexes) {
                 // single field index
                 if (index.fields.size() == 1){
@@ -89,7 +104,7 @@ public class CollectionController {
         }
     }
 
-    private void loadDataToIndex(Index index) throws IOException, ParseException {
+    private void loadDataToIndex(Index<String, Document> index) throws IOException, ParseException {
         /*
         * Load data to a specific index.
         * This can be used when a specific index is created, and we need
@@ -221,4 +236,7 @@ public class CollectionController {
         }
     }
 
+    public Index<String, Document> getMainIndex() {
+        return mainIndex;
+    }
 }

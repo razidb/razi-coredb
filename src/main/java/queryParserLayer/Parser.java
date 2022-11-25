@@ -4,7 +4,7 @@ import queryParserLayer.clauses.Clauses;
 import queryParserLayer.clauses.FromClause;
 import queryParserLayer.clauses.Operation;
 import queryParserLayer.operations.BaseOperation;
-import queryParserLayer.operations.Operations;
+import queryParserLayer.operations.MainOperations;
 import queryParserLayer.operations.SelectOperation;
 
 import java.util.ArrayList;
@@ -22,11 +22,11 @@ public class Parser {
 
     public static ParserResult parse(String statement) throws Exception {
         List<String> stParts = new java.util.ArrayList<String>(List.of(statement.split(" ")));
-        Operations operation = Operations.valueOf(stParts.remove(0).toUpperCase());
+        MainOperations operation = MainOperations.valueOf(stParts.remove(0).toUpperCase());
         BaseOperation operationInstance = null;
         switch (operation){
             case SELECT:
-                operationInstance = new SelectOperation(Operations.SELECT);
+                operationInstance = new SelectOperation(MainOperations.SELECT);
                 // get fields
                 String fields = stParts.remove(0);
                 operationInstance.setArgs(fields.split(","));
@@ -55,7 +55,6 @@ public class Parser {
                     }
                 }
             case UPDATE:
-            case INSERT:
             case DELETE:
             case CREATE:
 

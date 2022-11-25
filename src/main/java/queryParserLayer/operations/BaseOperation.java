@@ -1,10 +1,10 @@
 package queryParserLayer.operations;
 
 public class BaseOperation {
-    Operations type;
+    MainOperations type;
     String[] args;
 
-    BaseOperation(Operations type){
+    BaseOperation(MainOperations type){
         this.type = type;
     }
 

@@ -1,5 +1,10 @@
 {
-  "indexes":[],
+  "indexes":[
+    {
+      "name": "default",
+      "fields":["_id"],
+    }
+  ],
   "documents":[
     {"_id":"5ca06f06-05fa-44f8-aea7-1386c583d22e", "username": "mahdyhamad", "firstName":"test1", "lastName":"test1", "status": "A"},
     {"_id":"cb4afee9-85b0-4614-b8dd-f9ad90caf328", "username": "test2", "firstName":"test2", "lastName":"test2", "status": "I"}

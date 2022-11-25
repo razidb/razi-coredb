@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import collection.Collection;
 import controller.DBController;
+import document.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import queryParserLayer.ParserResult;
@@ -17,24 +18,33 @@ import queryParserLayer.clauses.Operations;
 import org.json.simple.parser.ParseException;
 import queryParserLayer.clauses.BinaryOperation;
 import queryParserLayer.operations.BaseOperation;
+import queryParserLayer.operations.MainOperations;
 import queryParserLayer.operations.SelectOperation;
 
 
 public class Resolver {
     private final String db_name;
     private final String collection_name;
+    private final MainOperations operation;
     private JSONObject query;
-    private ArrayList<JSONObject> documents;
 
+    private int codeStatus;
+    private Object result;
 
-    public Resolver(String db, String collection){
+    public Resolver(String db, String collection, MainOperations operation){
         this.db_name = db;
         this.collection_name = collection;
-        this.documents = new ArrayList<>();
+        this.operation = operation;
+        this.result = new ArrayList<>();
     }
 
-    public ArrayList<JSONObject> getDocuments() {
-        return documents;
+    public Object getResult() {
+        return result;
+    }
+
+    public int getCodeStatus() {
+        // TODO: get code status after executing query
+        return 200;
     }
 
     public void setQuery(JSONObject query) {
@@ -47,12 +57,22 @@ public class Resolver {
         // TODO: check the type of operation: Create, Read, Update, or Delete operation
         // TODO: use SelectOperation class and other classes to do so
 
-        // build operation stack
-        Stack<Object> operation_stack = new Stack<>();
-        this.buildOperationStack(operation_stack, query, "$AND", null);
-        // resolve operation stack and get a query set
-        QuerySet querySet = this.resolveOperationStack(operation_stack, null, new ArrayList<>());
-        this.documents = querySet.documents;
+        if (operation == MainOperations.SELECT){
+            this.handleSelection();
+        }
+        else if (operation == MainOperations.CREATE){
+            this.handleCreation();
+        }
+        else if (operation == MainOperations.UPDATE){
+            this.handleUpdate();
+        }
+        else if (operation == MainOperations.DELETE){
+            this.handleDeletion();
+        }
+        else {
+            // operation is not valid
+
+        }
 
     }
 
@@ -141,58 +161,45 @@ public class Resolver {
         Object top = operationStack.pop();
 
         if (top instanceof String && top.equals("$AND")){
-            // perform intersection between `query_set` later
-            ArrayList<QuerySet> queries = new ArrayList<>();
+            // init query result
+            QuerySet query_result = new QuerySet(null);
             while (operationStack.peek() != "END $AND"){
                 QuerySet querySet = resolveOperationStack(
                     operationStack, top, operations
                 );
-                if (querySet != null)
-                    queries.add(querySet);
+                if (querySet != null){
+                    query_result.intersect(querySet);
+                }
             }
-            // pop the element marking the end of the $AND operation
+            // popping element marking the end of the $AND operation
             operationStack.pop();
 
             // fetch data using a query from operations list
-            ArrayList<JSONObject> data = new ArrayList<>();
-            if (operations.size() > 0)
-                data = fullCollectionSearch(operations, true);
-            QuerySet operations_query_set = new QuerySet(data);
-            // perform intersection over queries
-            // TODO: implement functionality
-            ArrayList<JSONObject> d = new ArrayList<>();
-            for(QuerySet querySet: queries){
-                d.addAll(querySet.documents);
+            ArrayList<Document> documents = null;
+            if (operations.size() > 0){
+                documents = fullCollectionSearch(operations, true);
             }
-            d.addAll(operations_query_set.documents);
-
-            result = new QuerySet(d);
-
+            QuerySet operations_query_set = new QuerySet(documents);
+            query_result.intersect(operations_query_set);
+            result = query_result;
             // empty operations because we have fetch the data
             operations.clear();
         }
         else if (top instanceof String && top.equals("$OR")){
-            // Merge queries resulting from $OR clause
-            ArrayList<QuerySet> queries = new ArrayList<>();
+            QuerySet query_result = new QuerySet(null);
             // iterate over
             while (operationStack.peek() != "END $OR"){
                 QuerySet querySet = resolveOperationStack(
                     operationStack, top, operations
                 );
-                if (querySet != null)
-                    queries.add(querySet);
+                if (querySet != null){
+                    query_result.merge(querySet);
+                }
             }
             // pop the element marking the end of the $OR operation
             operationStack.pop();
-
             // Merge queries
-            // TODO: implement functionality
-            ArrayList<JSONObject> data = new ArrayList<>();
-            for(QuerySet querySet: queries){
-                data.addAll(querySet.documents);
-            }
-
-            result = new QuerySet(data);
+            result = query_result;
         }
         else if (top instanceof Operation){
             // add the current operation to list of operations and return.
@@ -201,7 +208,7 @@ public class Resolver {
         return result;
     }
 
-    private ArrayList<JSONObject> fullCollectionSearch(ArrayList<Operation> operations, boolean match_all){
+    private ArrayList<Document> fullCollectionSearch(ArrayList<Operation> operations, boolean match_all){
         /* Do full collection search for not indexed fields */
         // operations ar ORed together
 
@@ -214,18 +221,20 @@ public class Resolver {
         } catch (IOException | ParseException ignored){}
 
         Set<String> result_ids = new HashSet<>();
-        ArrayList<JSONObject> result = new ArrayList<>();
+        ArrayList<Document> result = new ArrayList<>();
 
         for (Object o: data){
-            JSONObject document = (JSONObject) o;
-            String doc_id = (String) document.get("_id");
+
+            JSONObject document_data = (JSONObject) o;
+            String doc_id = (String) document_data.get("_id");
+            Document document = new Document(doc_id, document_data.toJSONString());
             int operations_passed = 0;
             for (Operation operation: operations){
                 switch (operation.type) {
                     case EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL -> {
                         BinaryOperation binary_operation = (BinaryOperation) operation;
                         String field_name = binary_operation.operand1;
-                        Object value = document.get(field_name);
+                        Object value = document_data.get(field_name);
                         if (binary_operation.apply(value)){
                             operations_passed++;
                         }
@@ -265,5 +274,27 @@ public class Resolver {
                 // TODO: execute select query here
             }
         }
+    }
+
+    public void handleSelection(){
+        /* Facade method to handle select operation */
+        // build operation stack
+        Stack<Object> operation_stack = new Stack<>();
+        this.buildOperationStack(operation_stack, query, "$AND", null);
+        // resolve operation stack and get a query set
+        QuerySet querySet = this.resolveOperationStack(operation_stack, null, new ArrayList<>());
+        this.result = querySet.documents;
+    }
+
+    private void handleCreation(){
+        /* Facade method to handle create operation */
+    }
+
+    private void handleUpdate(){
+        /* Facade method to handle update operation */
+    }
+
+    private void handleDeletion(){
+        /* Facade method to handle delete operation */
     }
 }
