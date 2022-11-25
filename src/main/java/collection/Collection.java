@@ -18,15 +18,19 @@ public class Collection {
         return name;
     }
 
-    public boolean createIndex(String field){
-        return this.controller.createIndex(field);
+    public CollectionController getController() {
+        return controller;
+    }
+
+    public boolean createIndex(ArrayList<String> fields){
+        return this.controller.createIndex(fields);
     }
 
     public boolean deleteIndex(String field){
         return this.controller.deleteIndex(field);
     }
 
-    public ArrayList<JSONObject> find(String field, String value){
+    public ArrayList<JSONObject> get(String field, String value){
         return controller.getDocument(field, value);
     }
 }

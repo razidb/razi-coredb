@@ -2,6 +2,7 @@ package org.example;
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 
 import auth.AuthManager;
 import auth.AuthController;
@@ -10,7 +11,7 @@ import controller.DBController;
 
 public class Server{
     // leave port number > 1023 as linux reserve ports less than 1023
-    private static int port = 4999;
+    private static final int PORT = 4999;
     private static ServerSocket server;
     public static AuthManager authManager;
     public static DBController dbController;
@@ -22,7 +23,7 @@ public class Server{
         dbController = DBController.getDbController();
         authController = AuthController.getAuthController();
 
-        server = new ServerSocket(port);
+        server = new ServerSocket(PORT);
 
         while (true){
             System.out.println("Waiting for a client to connect....");
@@ -37,9 +38,14 @@ public class Server{
             thread.start();
         }
         catch (IOException e){
-            System.out.println("Could not listen on port: " + port);
+            System.out.println("Could not listen on port: " + PORT);
             System.out.println(e.getMessage());
             System.exit(-1);
+        }
+        catch (Exception syntaxException){
+            System.out.println("Invalid syntax: " + syntaxException.getMessage());
+            System.out.println(Arrays.toString(syntaxException.getStackTrace()));
+
         }
     }
 }

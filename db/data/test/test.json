@@ -1,12 +1,12 @@
 {
-  "indexes":["_id","email","username", "grade", "name"],
-  "documents":[
-    {"username":"mahdyhamad","_id":"13e3c7c9-4025-49d5-955f-992012895a88"},
-    {"_id":"5ca06f06-05fa-44f8-aea7-1386c583d22e", "name": "dr heba"},
-    {"_id":"cb4afee9-85b0-4614-b8dd-f9ad90caf328"},
-    {"_id":"f8e13cc8-1ec4-44fe-add0-d031e397b676"},
+  "indexes":[
     {
-      "_id":"9a936793-ca85-4e86-b006-0fda82e7171e",
-      "grade": 10
-    },
-    {"_id":"bb76f241-6bd5-40f7-8d07-3dd08a059c45"},{"_id":"79d97bb9-f0a2-4262-bfca-293e30e18788"},{"_id":"d6ed687c-b0d6-4795-96bc-e0253a82e073","username":"mahdy"},{"count":10,"_id":"34117495-a15c-4414-9dce-503e6bc9797e","email":"mahdy.hamad0@salalem.com","username":"mahdy"},{"address":{"city":"Amman","street":"Mansour AlAatoum"},"count":100,"name":"mahdyhamadnew----newtest-alhamd","_id":"6d070d84-0ead-4bee-ae64-3dea24c8983a","email":"mahdy.hamad1@salalem.com","username":"mahdy1"},{"garde":"10","name":"mahdy","mobile":"10000","_id":"bb9e9839-8bc1-4add-9e8a-4b693ec4d1e4"},{"test":"test","name":"mahdy","_id":"b78e3f03-a426-45bd-9dc7-e824bab0ad83"},{"name":"mahdy","mahdyhamad45":"test","_id":"fa086351-fd92-4140-9b02-2f139548826c","test":"tets"}]}
+      "name": "default",
+      "fields":["_id"],
+    }
+  ],
+  "documents":[
+    {"_id":"5ca06f06-05fa-44f8-aea7-1386c583d22e", "username": "mahdyhamad", "firstName":"test1", "lastName":"test1", "status": "A"},
+    {"_id":"cb4afee9-85b0-4614-b8dd-f9ad90caf328", "username": "test2", "firstName":"test2", "lastName":"test2", "status": "I"}
+  ]
+}

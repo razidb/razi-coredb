@@ -16,6 +16,10 @@ public class CollectionFileController {
 
     private String collectionPath;
 
+    public CollectionFileController(String collectionPath){
+        this.collectionPath = collectionPath;
+    }
+
     public static boolean collectionExists(String collectionPath){
         File collectionFile = new File(collectionPath);
         return collectionFile.exists();
@@ -49,7 +53,7 @@ public class CollectionFileController {
         collectionDir.renameTo(newCollectionDir);
     }
     public static void updateCollection(String db, String collection, HashMap<String, Object> data){
-
+        // TODO: implement functionality
     }
 
     public static void deleteCollection(String db, String collection){
@@ -138,10 +142,6 @@ public class CollectionFileController {
         }
     }
 
-    CollectionFileController(String collectionPath){
-        this.collectionPath = collectionPath;
-    }
-
     public JSONArray getAllDocuments() throws IOException, ParseException{
         JSONParser parser = new JSONParser();
         JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
@@ -166,19 +166,22 @@ public class CollectionFileController {
 
     // indexes
 
-    public ArrayList<String> getIndexes() throws IOException, ParseException {
+    public ArrayList<JSONObject> getIndexes() throws IOException, ParseException {
         JSONParser parser = new JSONParser();
         JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
-        return (ArrayList<String>) collection.getOrDefault("indexes", null);
+        JSONObject defaultIndex = new JSONObject();
+        return (ArrayList<JSONObject>) collection.getOrDefault("indexes", null);
 
     }
 
-    public void createIndex(String field) throws IOException, ParseException {
+    public void createIndex(ArrayList<String> fields) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
         JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
         FileWriter file = new FileWriter(collectionPath);
         JSONArray indexesFromFile = (JSONArray) collection.getOrDefault("indexes", new JSONArray());
-        indexesFromFile.add(field);
+        JSONObject indexObject = new JSONObject();
+        indexObject.put("fields", fields);
+        indexesFromFile.add(indexObject);
         collection.put("indexes", indexesFromFile);
         file.write(collection.toJSONString());
         file.flush();
