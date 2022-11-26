@@ -246,4 +246,14 @@ public class CollectionController {
     public Index<String, Document> getMainIndex() {
         return mainIndex;
     }
+
+    public void addDocumentsToCollection(JSONArray documents){
+        try{
+            CollectionFileController.writeDocumentsToCollection(path, documents);
+        }
+        catch (Exception exception){
+
+        }
+    }
+
 }

@@ -32,6 +32,6 @@ public class Collection {
     }
 
     public ArrayList<Document> get(String field, String value){
-        return controller.getDocument(field, value, null );
+        return controller.getDocument(field, value, null);
     }
 }

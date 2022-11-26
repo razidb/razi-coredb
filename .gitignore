@@ -1,0 +1,5 @@
+# Maven build directory
+target
+
+# data files
+db/data/*
