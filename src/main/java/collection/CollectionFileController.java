@@ -70,7 +70,7 @@ public class CollectionFileController {
         return (JSONArray) collection.getOrDefault("documents", new JSONArray());
     }
 
-    private static void writeDocumentsToCollection(String collectionPath, JSONArray documents) throws IOException, ParseException {
+    public static void writeDocumentsToCollection(String collectionPath, JSONArray documents) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
         JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
         FileWriter file = new FileWriter(collectionPath);
