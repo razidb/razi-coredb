@@ -13,4 +13,7 @@ public class Index<K extends Comparable<K>, V> {
         this.bst =  new BST<K, V>();
     }
 
+    public ArrayList<String> getFields() {
+        return fields;
+    }
 }

@@ -1,6 +1,7 @@
 package collection;
 
 
+import document.Document;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class Collection {
         return this.controller.deleteIndex(field);
     }
 
-    public ArrayList<JSONObject> get(String field, String value){
-        return controller.getDocument(field, value);
+    public ArrayList<Document> get(String field, String value){
+        return controller.getDocument(field, value, null );
     }
 }

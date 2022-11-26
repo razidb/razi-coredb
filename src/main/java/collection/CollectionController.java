@@ -7,7 +7,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
 
@@ -200,33 +202,38 @@ public class CollectionController {
         return true;
     }
 
-    public ArrayList<JSONObject> getDocument(String field, String value){
-        // try single-indexed fields
-        Index indexedField = null;
-        for (Index index: indexes){
-            if (index.fields.size() == 1 && Objects.equals(index.fields.get(0), field)){
-                indexedField = index;
-                break;
+    public Index<String, Document> findIndex(Object field_set){
+        boolean single_field_lookup = field_set instanceof String;
+        Index index = null;
+        for (Index i: indexes){
+            int index_fields_size = i.fields.size();
+            if (index_fields_size == 1 && single_field_lookup){
+                if (Objects.equals(i.fields.get(0), field_set)){
+                    index = i;
+                    break;
+                }
             }
-            else if (index.fields.size() > 1){
-                String fields[] = field.split(MULTI_FIELD_INDEX_VALUES_SEPARATOR);
-                for (String i: fields){
-                    if (index.fields.contains(i)){
-                        indexedField = index;
-                        break;
-                    }
+            else if (index_fields_size > 1 && !single_field_lookup && field_set instanceof ArrayList<?>){
+                if (index_fields_size == ((ArrayList<?>) field_set).size() && i.fields.containsAll(((ArrayList<?>) field_set))){
+                    index = i;
+                    break;
                 }
             }
         }
-        // if the field is indexed
-        if (indexedField != null){
-            Node object = indexedField.bst.search(value);
-            ArrayList<JSONObject> result = new ArrayList<>();
-            if (object!= null){
-                for (Object d: object.values){
-                    Document dd = (Document) d;
-                    result.add(dd.getValueAsJSON());
-                }
+        return index;
+    }
+
+    public ArrayList<Document> getDocument(Object field_set, Object value_set, Index<String, Document> index){
+        // single field
+        if (index == null)
+            index = findIndex(field_set);
+
+        if (index != null){
+            Node<String, Document> node = index.bst.search((String) value_set);
+            ArrayList<Document> result = new ArrayList<>();
+            if (node != null){
+                result.addAll(node.values);
+                System.out.println(node.values);
             }
             return result;
         }
