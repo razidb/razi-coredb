@@ -3,11 +3,9 @@ package org.example;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import dataLayer.Resolver;
-import document.Document;
 import network.SocketOutputStreamHandler;
 import org.json.simple.JSONObject;
 import network.SocketInputStreamHandler;
