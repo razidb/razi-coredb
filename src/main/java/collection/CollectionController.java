@@ -9,6 +9,7 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
@@ -203,20 +204,31 @@ public class CollectionController {
     }
 
     public Index<String, Document> findIndex(Object field_set){
-        boolean single_field_lookup = field_set instanceof String;
         Index index = null;
-        for (Index i: indexes){
-            int index_fields_size = i.fields.size();
-            if (index_fields_size == 1 && single_field_lookup){
-                if (Objects.equals(i.fields.get(0), field_set)){
-                    index = i;
-                    break;
-                }
+        boolean single_field_lookup = false;
+        if (field_set instanceof Collection<?>){
+            if (((Collection<?>) field_set).size() == 1){
+                single_field_lookup = true;
             }
-            else if (index_fields_size > 1 && !single_field_lookup && field_set instanceof ArrayList<?>){
-                if (index_fields_size == ((ArrayList<?>) field_set).size() && i.fields.containsAll(((ArrayList<?>) field_set))){
-                    index = i;
-                    break;
+        }
+
+        if (single_field_lookup && ((Collection<?>) field_set).contains("_id")){
+            index = mainIndex;
+        }
+        else{
+            for (Index i: indexes){
+                int index_fields_size = i.fields.size();
+                if (index_fields_size == 1 && single_field_lookup){
+                    if (Objects.equals(i.fields.get(0), field_set)){
+                        index = i;
+                        break;
+                    }
+                }
+                else if (index_fields_size > 1 && !single_field_lookup && field_set instanceof ArrayList<?>){
+                    if (index_fields_size == ((ArrayList<?>) field_set).size() && i.fields.containsAll(((ArrayList<?>) field_set))){
+                        index = i;
+                        break;
+                    }
                 }
             }
         }

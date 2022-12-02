@@ -52,6 +52,7 @@ public class SelectionExecutor {
         }
         // try to find an index for the passed field/s
         Index<String, Document> index = collectionController.findIndex(fields);
+        System.out.println(index);
         if (index != null){
             ArrayList<String> value = new ArrayList<>();
             for (String v: index.getFields()){

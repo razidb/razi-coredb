@@ -19,7 +19,6 @@ public class Node <Key extends Comparable<Key>, Value>{
     }
 
     public Node<Key, Value> find(Key k) {
-        System.out.println(key + " => " + k);
         if (k.compareTo(key) == 0){
             return this;
         } else if (key.compareTo(k) < 0 && right != null) {

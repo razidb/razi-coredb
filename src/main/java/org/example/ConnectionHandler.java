@@ -38,7 +38,6 @@ public class ConnectionHandler extends Thread {
         this.client = client;
         this.client.setKeepAlive(true);
         this.client.setSoTimeout(1000); // in milliseconds
-
      }
 
     @Override
@@ -49,11 +48,6 @@ public class ConnectionHandler extends Thread {
         } catch (IOException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
             System.out.println("Stack: " + Arrays.toString(e.getStackTrace()));
-//            try {
-//                this.end();
-//            } catch (IOException ex) {
-//                throw new RuntimeException(ex);
-//            }
         }
     }
 

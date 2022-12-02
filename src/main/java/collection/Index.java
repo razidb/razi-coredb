@@ -16,4 +16,12 @@ public class Index<K extends Comparable<K>, V> {
     public ArrayList<String> getFields() {
         return fields;
     }
+
+    @Override
+    public String toString() {
+        return "Index{" +
+                "fields=" + fields +
+                ", bst=" + bst +
+                '}';
+    }
 }
