@@ -1,29 +1,23 @@
 package dataLayer;
 
-import java.util.Set;
 import java.util.Stack;
-import java.util.HashSet;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
-import collection.Collection;
-import controller.DBController;
 import document.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import queryParserLayer.ParserResult;
 import queryParserLayer.clauses.Operation;
-import collection.CollectionFileController;
 import queryParserLayer.clauses.Operations;
-import org.json.simple.parser.ParseException;
 import queryParserLayer.clauses.BinaryOperation;
-import queryParserLayer.operations.BaseOperation;
 import queryParserLayer.operations.MainOperations;
-import queryParserLayer.operations.SelectOperation;
 
 
 public class Resolver {
-    private SelectionExecutor selection_executor;
+    private String dbName;
+    private String collectionName;
+    private SelectionExecutor selectionExecutor;
+    private InsertionExecutor insertionExecutor;
 
     private final MainOperations operation;
     private JSONObject query;
@@ -31,10 +25,18 @@ public class Resolver {
     private int codeStatus;
     private Object result;
 
+    private Logger logger;
+
     public Resolver(String db, String collection, MainOperations operation){
-        this.selection_executor = new SelectionExecutor(db, collection);
+        this.dbName = db;
+        this.collectionName = collection;
         this.operation = operation;
         this.result = new ArrayList<>();
+        // initialize executors
+        this.selectionExecutor = new SelectionExecutor(db, collection);
+        this.insertionExecutor = new InsertionExecutor(db, collection);
+        // get logger
+        this.logger = Logger.getLogger(this.getClass().getName());
     }
 
     public Object getResult() {
@@ -59,8 +61,9 @@ public class Resolver {
         if (operation == MainOperations.SELECT){
             this.handleSelection();
         }
-        else if (operation == MainOperations.CREATE){
-            this.handleCreation();
+        else if (operation == MainOperations.INSERT){
+            System.out.println("from handling insertion");
+            this.handleInsert();
         }
         else if (operation == MainOperations.UPDATE){
             this.handleUpdate();
@@ -70,7 +73,7 @@ public class Resolver {
         }
         else {
             // operation is not valid
-
+            logger.warning("unrecognized operation: " + operation);
         }
 
     }
@@ -179,7 +182,7 @@ public class Resolver {
             // fetch data using a query from operations list
             ArrayList<Document> documents = null;
             if (operations.size() > 0){
-                documents = this.selection_executor.execute(operations, true);
+                documents = this.selectionExecutor.execute(operations, true);
             }
             QuerySet operations_query_set = new QuerySet(documents);
             query_result.intersect(operations_query_set);
@@ -221,8 +224,21 @@ public class Resolver {
         this.result = querySet.documents;
     }
 
-    private void handleCreation(){
-        /* Facade method to handle create operation */
+    private void handleInsert(){
+        /* Facade method to handle insert operation */
+        // get the type of data to insert
+        String dataType = (String) query.getOrDefault("type", null);
+        Object payload = query.getOrDefault("payload", null);
+        System.out.println(payload);
+        if (dataType.equals("document")) {
+            this.insertionExecutor.execute(payload, dataType);
+        } else if (dataType.equals("index")) {
+            this.insertionExecutor.execute(payload, dataType);
+        }
+        else {
+            // invalid data type
+        }
+
     }
 
     private void handleUpdate(){

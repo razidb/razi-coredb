@@ -8,11 +8,8 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Vector;
 
 public class CollectionController {
     String name;
@@ -262,6 +259,50 @@ public class CollectionController {
     public void addDocumentsToCollection(JSONArray documents){
         try{
             CollectionFileController.writeDocumentsToCollection(path, documents);
+        }
+        catch (Exception exception){
+
+        }
+    }
+
+    public void addDocument(JSONObject documentObject){
+        try{
+            // add document to file
+            documentObject.put("_id", UUID.randomUUID().toString());
+            CollectionFileController.addDocument(path, documentObject);
+            // add document to indexes
+            Document document = new Document(documentObject.get("_id").toString(), documentObject.toJSONString());
+            // insert the document in the main index
+            this.mainIndex.bst.Insert(document.getId(), document);
+            // iterate over user-defined indexes
+            for (Index index : indexes) {
+                // single field index
+                if (index.fields.size() == 1){
+                    String indexedField = (String) index.fields.get(0);
+                    if (documentObject.containsKey(indexedField)) {
+                        String indexedValue = documentObject.getOrDefault(indexedField, "").toString();
+                        index.bst.Insert(indexedValue, document);
+                    }
+                }
+                else if (index.fields.size() > 1){
+                    // multi-field index
+                    // index value will be represented as: val1-val2-val3-...
+                    ArrayList<String> values = new ArrayList<>();
+                    for (Object field: index.fields){
+                        String value = (String) documentObject.getOrDefault(field, "");
+                        values.add(value);
+                    }
+                    String indexedValue = String.join(
+                            MULTI_FIELD_INDEX_VALUES_SEPARATOR,
+                            values
+                    );
+                    index.bst.Insert(indexedValue, document);
+                }
+                // index has no fields
+                else{
+                    // do nothing
+                }
+            }
         }
         catch (Exception exception){
 

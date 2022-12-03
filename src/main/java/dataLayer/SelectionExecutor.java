@@ -14,10 +14,8 @@ import queryParserLayer.clauses.Operation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.StreamSupport;
 
 public class SelectionExecutor {
     /* Responsible for executing optimized selection over a set of operations */
