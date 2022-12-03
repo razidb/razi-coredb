@@ -1,7 +1,7 @@
 package queryParserLayer.operations;
 
 public enum MainOperations {
-    CREATE,
+    INSERT,
     SELECT,
     UPDATE,
     DELETE,

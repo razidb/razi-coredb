@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 import auth.AuthManager;
 import auth.AuthController;
 import controller.DBController;
-import org.json.simple.JSONArray;
 
 
 public class Server{

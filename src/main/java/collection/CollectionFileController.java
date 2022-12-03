@@ -90,12 +90,11 @@ public class CollectionFileController {
         return false;
     }
 
-    public static void addDocument(String db, String collection, Map<String, Object> data) throws IOException, ParseException {
-        String collectionPath = PathManager.getCollectionPath(db, collection);
+    public static void addDocument(String collectionPath, Map<String, Object> data) throws IOException, ParseException {
         JSONArray documents = getDocuments(collectionPath);
-        String _id = UUID.randomUUID().toString();
         JSONObject newDocument = new JSONObject(data);
-        newDocument.put("_id", _id);
+        if (!newDocument.containsKey("_id"))
+            newDocument.put("_id", UUID.randomUUID().toString());
         documents.add(newDocument);
         writeDocumentsToCollection(collectionPath, documents);
     }

@@ -14,7 +14,7 @@ public class SocketInputStreamHandler {
     // | content type | operation type | content length |            MSG             |
     // ^--- 1 Byte ---^---- 1 Byte ----^--- 4 Bytes ----^----------------------------
 
-    private DataInputStream inputStream;
+    private final DataInputStream inputStream;
     private String dataType;
     private int dataLength;
 
@@ -68,8 +68,8 @@ public class SocketInputStreamHandler {
             case 's':
                 this.operationType = MainOperations.SELECT;
                 break;
-            case 'c':
-                this.operationType = MainOperations.CREATE;
+            case 'i':
+                this.operationType = MainOperations.INSERT;
                 break;
             case 'u':
                 this.operationType = MainOperations.UPDATE;

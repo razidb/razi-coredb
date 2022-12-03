@@ -56,7 +56,7 @@ public class Parser {
                 }
             case UPDATE:
             case DELETE:
-            case CREATE:
+            case INSERT:
 
         }
         if (operationInstance == null)
