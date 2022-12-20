@@ -99,8 +99,7 @@ public class CollectionFileController {
         writeDocumentsToCollection(collectionPath, documents);
     }
 
-    public static void deleteDocument(String db, String collection, String id) throws IOException, ParseException {
-        String collectionPath = PathManager.getCollectionPath(db, collection);
+    public static void deleteDocument(String collectionPath, String id) throws IOException, ParseException {
         JSONArray documents = getDocuments(collectionPath);
         int documentIndex = -1;
         for (int i=0; i < documents.size(); i++){

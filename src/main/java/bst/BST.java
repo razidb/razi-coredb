@@ -7,6 +7,20 @@ public class BST<Key extends Comparable<Key>, Value>{
         root = null;
     }
 
+    Node<Key, Value> min(Node<Key, Value> node){
+        if (node.left != null)
+            return min(node.left);
+
+        return node;
+    }
+
+    Node<Key, Value> max(Node<Key, Value> node){
+        if (node.right != null)
+            return max(node.right);
+
+        return node;
+    }
+
     // Search key
     public Node<Key, Value> search(Key k) {
         return root.find(k);
@@ -45,6 +59,89 @@ public class BST<Key extends Comparable<Key>, Value>{
             parent.right != null? parent.right.height: 0
         ) + 1;
         return balance(parent);
+    }
+
+
+    public Value delete(Key key){
+        // facade function to call delete on the root
+        return delete(key, root);
+    }
+
+    private Value delete(Key k, Node<Key, Value> node){
+        Node<Key, Value> parent = null;
+        Node<Key, Value> target = null;
+
+        if (k.compareTo(node.key) == 0)
+            target = node;
+        else if (k.compareTo(node.key) > 0 && node.right != null) {
+            if (k.compareTo(node.right.key) == 0){
+                parent = node;
+                target = node.right;
+            }
+            else{
+                return delete(k, node.right);
+            }
+        }
+        else if (k.compareTo(node.key) < 0 && node.left != null) {
+            if (k.compareTo(node.left.key) == 0){
+                parent = node;
+                target = node.left;
+            }
+            else{
+                return delete(k, node.left);
+            }
+        }
+
+        // make sure target node is found
+        assert target != null;
+
+        delete(target, parent);
+
+        return target.value;
+    }
+
+    private void delete(Node<Key, Value> target, Node<Key, Value> parent){
+        // case 1: target is a leaf node
+        if (target.left == null && target.right == null){
+            // simply, disconnect it from parent's left or right
+            if (parent.left.key == target.key)
+                parent.left = null;
+            else if (parent.right.key == target.key) {
+                parent.right = null;
+            }
+            else {
+                System.out.println("could delete node, parent and target nodes are not related");
+            }
+        }
+        // case 2: target has only one child
+        else if (target.right == null) {
+            parent.left = target.left;
+        }
+        else if (target.left == null) {
+            parent.right = target.right;
+        }
+        // case 2: target has a left and right children
+        else {
+            // get the minimum node in the right subtree for target node
+            Node<Key, Value> min_right = min(target.right);
+            // duplicate the minimum node in the right subtree
+            Node<Key, Value> replaced_by = new Node<>(min_right.key, min_right.value);
+            replaced_by.values = min_right.values;
+            // copy target's left and right subtrees to new node
+            // note: here, we will be disconnecting target node including data in the target.values
+            replaced_by.right = target.right;
+            replaced_by.left = target.left;
+            // replace the target node with the new node
+            if (parent.left.key == target.key){
+                parent.left = replaced_by;
+            }
+            else if (parent.right.key == target.key) {
+                parent.right = replaced_by;
+            }
+            // delete the duplicate node in the right subtree
+            delete(min_right.key, replaced_by.right);
+        }
+
     }
 
     public Node<Key, Value> rotateRight(Node<Key, Value> n){

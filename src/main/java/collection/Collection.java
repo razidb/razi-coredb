@@ -31,7 +31,7 @@ public class Collection {
         return this.controller.deleteIndex(field);
     }
 
-    public ArrayList<Document> get(String field, String value){
-        return controller.getDocument(field, value, null);
-    }
+//    public ArrayList<Document> get(String field, String value){
+//        return controller.getDocument(field, value, null);
+//    }
 }
