@@ -200,28 +200,23 @@ public class CollectionController {
         return true;
     }
 
-    public Index<String, Document> findIndex(Object field_set){
+    public Index<String, Document> findIndex(ArrayList field_set){
         Index index = null;
-        boolean single_field_lookup = false;
-        if (field_set instanceof Collection<?>){
-            if (((Collection<?>) field_set).size() == 1){
-                single_field_lookup = true;
-            }
-        }
+        boolean single_field_lookup = field_set.size() == 1;
 
-        if (single_field_lookup && ((Collection<?>) field_set).contains("_id")){
+        if (single_field_lookup && field_set.contains("_id")){
             index = mainIndex;
         }
         else{
             for (Index i: indexes){
                 int index_fields_size = i.fields.size();
                 if (index_fields_size == 1 && single_field_lookup){
-                    if (Objects.equals(i.fields.get(0), field_set)){
+                    if (Objects.equals(i.fields.get(0), field_set.get(0))){
                         index = i;
                         break;
                     }
                 }
-                else if (index_fields_size > 1 && !single_field_lookup && field_set instanceof ArrayList<?>){
+                else if (index_fields_size > 1 && !single_field_lookup){
                     if (index_fields_size == ((ArrayList<?>) field_set).size() && i.fields.containsAll(((ArrayList<?>) field_set))){
                         index = i;
                         break;
@@ -232,7 +227,7 @@ public class CollectionController {
         return index;
     }
 
-    public ArrayList<Document> getDocument(Object field_set, Object value_set, Index<String, Document> index){
+    public ArrayList<Document> getDocument(ArrayList field_set, Object value_set, Index<String, Document> index){
         // single field
         if (index == null)
             index = findIndex(field_set);
@@ -242,7 +237,6 @@ public class CollectionController {
             ArrayList<Document> result = new ArrayList<>();
             if (node != null){
                 result.addAll(node.values);
-                System.out.println(node.values);
             }
             return result;
         }
@@ -250,10 +244,6 @@ public class CollectionController {
             // scan the file for the data provided
             return null;
         }
-    }
-
-    public Index<String, Document> getMainIndex() {
-        return mainIndex;
     }
 
     public void addDocumentsToCollection(JSONArray documents){
@@ -306,6 +296,21 @@ public class CollectionController {
         }
         catch (Exception exception){
 
+        }
+    }
+
+
+    public boolean deleteDocument(String _id){
+        try{
+            // delete from file
+            CollectionFileController.deleteDocument(path, _id);
+            // delete document from memory (indexes)
+            // delete from main index
+            this.mainIndex.bst.delete(_id);
+            // TODO: implement functionality
+            return true;
+        } catch (Exception e){
+            return false;
         }
     }
 

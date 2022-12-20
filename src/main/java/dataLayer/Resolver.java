@@ -1,5 +1,7 @@
 package dataLayer;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Stack;
 import java.util.ArrayList;
 import java.util.logging.Logger;
@@ -18,12 +20,15 @@ public class Resolver {
     private String collectionName;
     private SelectionExecutor selectionExecutor;
     private InsertionExecutor insertionExecutor;
+    private DeletionExecutor deletionExecutor;
 
     private final MainOperations operation;
     private JSONObject query;
 
     private int codeStatus;
     private Object result;
+
+    private Duration resolve_time;
 
     private Logger logger;
 
@@ -35,6 +40,7 @@ public class Resolver {
         // initialize executors
         this.selectionExecutor = new SelectionExecutor(db, collection);
         this.insertionExecutor = new InsertionExecutor(db, collection);
+        this.deletionExecutor = new DeletionExecutor(db, collection);
         // get logger
         this.logger = Logger.getLogger(this.getClass().getName());
     }
@@ -57,12 +63,11 @@ public class Resolver {
 
         // TODO: check the type of operation: Create, Read, Update, or Delete operation
         // TODO: use SelectOperation class and other classes to do so
-
+        Instant start = Instant.now();
         if (operation == MainOperations.SELECT){
             this.handleSelection();
         }
         else if (operation == MainOperations.INSERT){
-            System.out.println("from handling insertion");
             this.handleInsert();
         }
         else if (operation == MainOperations.UPDATE){
@@ -75,7 +80,8 @@ public class Resolver {
             // operation is not valid
             logger.warning("unrecognized operation: " + operation);
         }
-
+        this.resolve_time = Duration.between(start, Instant.now());
+        this.logger.info(operation + " query resolved in " + this.resolve_time.toMillis() + " milli seconds");
     }
 
     private void buildOperationStack(
@@ -247,5 +253,17 @@ public class Resolver {
 
     private void handleDeletion(){
         /* Facade method to handle delete operation */
+        String dataType = (String) query.getOrDefault("type", null);
+        JSONObject payload = (JSONObject) query.getOrDefault("payload", null);
+        String _id = (String) payload.getOrDefault("_id", null);
+        System.out.println(payload);
+        if (dataType.equals("document")) {
+            this.deletionExecutor.execute(_id, null, dataType);
+        } else if (dataType.equals("index")) {
+            this.deletionExecutor.execute(_id, null, dataType);
+        }
+        else {
+            // invalid data type
+        }
     }
 }

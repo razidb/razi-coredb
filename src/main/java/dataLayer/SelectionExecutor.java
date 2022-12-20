@@ -50,7 +50,6 @@ public class SelectionExecutor {
         }
         // try to find an index for the passed field/s
         Index<String, Document> index = collectionController.findIndex(fields);
-        System.out.println(index);
         if (index != null){
             ArrayList<String> value = new ArrayList<>();
             for (String v: index.getFields()){
@@ -66,11 +65,9 @@ public class SelectionExecutor {
             result = this.fullCollectionSearch(operations, match_all);
             System.out.println("Full collection search");
         }
-
-        System.out.println("######################################################");
         System.out.println("Operations: " + operations);
-        System.out.println("Result: " + result);
-        System.out.println("######################################################");
+        System.out.println("Count: " + result.size());
+
 
         return result;
     }
