@@ -18,8 +18,10 @@ import queryParserLayer.operations.MainOperations;
 public class Resolver {
     private String dbName;
     private String collectionName;
+    // executors
     private SelectionExecutor selectionExecutor;
     private InsertionExecutor insertionExecutor;
+    private UpdateExecutor updateExecutor;
     private DeletionExecutor deletionExecutor;
 
     private final MainOperations operation;
@@ -60,9 +62,8 @@ public class Resolver {
 
     public void resolve(){
         /*  Responsible for resolving the query  */
-
-        // TODO: check the type of operation: Create, Read, Update, or Delete operation
-        // TODO: use SelectOperation class and other classes to do so
+        // 1- get the type of operation to be resolved
+        // 2- call the method responsible for handling this operation
         Instant start = Instant.now();
         if (operation == MainOperations.SELECT){
             this.handleSelection();
@@ -249,6 +250,18 @@ public class Resolver {
 
     private void handleUpdate(){
         /* Facade method to handle update operation */
+        // get the type of data to updated
+        String dataType = (String) query.getOrDefault("type", null);
+        Object payload = query.getOrDefault("payload", null);
+        System.out.println(payload);
+        if (dataType.equals("document")) {
+            this.updateExecutor.execute(payload, dataType);
+        } else if (dataType.equals("index")) {
+            this.updateExecutor.execute(payload, dataType);
+        }
+        else {
+            // invalid data type
+        }
     }
 
     private void handleDeletion(){
