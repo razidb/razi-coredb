@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Arrays;
 
+import auth.AuthController;
 import dataLayer.Resolver;
 import network.SocketOutputStreamHandler;
 import org.json.simple.JSONObject;
@@ -28,15 +29,23 @@ public class ConnectionHandler extends Thread {
     private BufferedInputStream bufferedInputStream;
     private DataInputStream dataInputStream;
     private DataOutputStream dataOutputStream;
+    // json parser
+    private JSONParser jsonParser;
 
-    ConnectionHandler(Socket client) throws SocketException {
+    ConnectionHandler(Socket client) throws IOException {
         // this msg will be printed only when a client is connected
         System.out.println("connect with client on " + client);
         this.exit = false;
         this.client = client;
         this.client.setKeepAlive(true);
         this.client.setSoTimeout(1000); // in milliseconds
-     }
+
+        this.bufferedInputStream = new BufferedInputStream(this.client.getInputStream());
+        this.dataInputStream = new DataInputStream(bufferedInputStream);
+        this.dataOutputStream = new DataOutputStream(client.getOutputStream());
+        // use json parser to parse json-string to json-object
+        this.jsonParser = new JSONParser();
+    }
 
     @Override
     public void run() {
@@ -50,10 +59,9 @@ public class ConnectionHandler extends Thread {
     }
 
     private void handle() throws IOException, ParseException {
-
-        this.bufferedInputStream = new BufferedInputStream(this.client.getInputStream());
-        this.dataInputStream = new DataInputStream(bufferedInputStream);
-        this.dataOutputStream = new DataOutputStream(this.client.getOutputStream());
+        // 1- REQUEST-TO-CONNECT
+        this.handleRequestToConnect();
+        // 2- Start Performing Queries
 
         // The purpose of the while loop is to keep connection open
         // with client until exit command is fired or timeout
@@ -70,8 +78,6 @@ public class ConnectionHandler extends Thread {
             }
 
             String dataString = socketInputStreamHandler.getData();
-            // use json parser to parse json-string to json-object
-            JSONParser jsonParser = new JSONParser();
             JSONObject query = (JSONObject) jsonParser.parse(String.valueOf(dataString));
 
             // log received query
@@ -100,6 +106,42 @@ public class ConnectionHandler extends Thread {
             );
             socketOutputStreamHandler.handle();
         }
+    }
+
+    private void handleRequestToConnect() throws IOException, ParseException {
+        // This is the beginning request in a chain-of-requests to open a connection
+        // If this fails, the connection will be terminated, if succeeded, a session is established.
+        // Expected Request Content:
+        // - username (required)
+        // - password (required)
+        // - database (optional)
+
+        // Expected Response:
+        // - successful authentication (ok)
+        //      -> create a session
+        // - failed to authenticate (error)
+
+        SocketInputStreamHandler initSocketInputStreamHandler = new SocketInputStreamHandler(dataInputStream);
+        initSocketInputStreamHandler.handle();
+        // get data from request
+        String strAuthData = initSocketInputStreamHandler.getData();
+        JSONObject authData = (JSONObject) jsonParser.parse(String.valueOf(strAuthData));
+        String username = (String) authData.getOrDefault("username", "default");
+        String password = (String) authData.getOrDefault("password", null);
+        // authenticate
+        AuthController authController = AuthController.getAuthController();
+        boolean isAuthenticated = authController.authenticate(username, password);
+        // set response status code
+        int statusCode = isAuthenticated? 200: 401;
+        // send result to client
+        SocketOutputStreamHandler initSocketOutputStreamHandler = new SocketOutputStreamHandler(
+                this.dataOutputStream, statusCode, isAuthenticated? "ok": "unauthorized"
+        );
+        initSocketOutputStreamHandler.handle();
+        // end the connection if authentication failed
+        if (!isAuthenticated)
+            end();
+
     }
 
     private void end() throws IOException {
