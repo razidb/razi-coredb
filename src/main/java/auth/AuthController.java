@@ -30,6 +30,10 @@ public class AuthController {
         return authController;
     }
 
+    public ACL getAcl() {
+        return acl;
+    }
+
     private void loadUsers(){
         JSONArray usersFromFile = null;
         try{
