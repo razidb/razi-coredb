@@ -10,6 +10,7 @@ import org.json.simple.parser.ParseException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class ACL {
 
@@ -42,7 +43,7 @@ public class ACL {
             JSONObject ownerDetailsFromFile = (JSONObject) aclEntryObjFromFile.get("owner");
             JSONArray permissionsDetailsFromFile = (JSONArray) aclEntryObjFromFile.get("permissions");
 
-            int resourceInode = Integer.parseInt(resourceDetailsFromFile.get("Inode").toString());
+            String resourceId = resourceDetailsFromFile.get("id").toString();
             String resourceType = resourceDetailsFromFile.get("type").toString();
             ArrayList<Permission> permissions = new ArrayList<>();
             String ownerId = ownerDetailsFromFile.get("id").toString();
@@ -66,7 +67,7 @@ public class ACL {
             }
 
             ACLEntry aclEntry = new ACLEntry(
-                resourceInode,
+                resourceId,
                 resourceType,
                 owner,
                 permissions
@@ -75,9 +76,9 @@ public class ACL {
         }
     }
 
-    public boolean checkPermission(int resourceInode, Permissions p, User user){
+    public boolean checkPermission(String resourceId, Permissions p, User user){
         for (ACLEntry aclEntry: this.aclEntries){
-            if(aclEntry.getResourceInode() == resourceInode){
+            if(Objects.equals(aclEntry.getResourceId(), resourceId)){
                 return aclEntry.checkPermission(p, user);
             }
         }

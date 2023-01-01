@@ -7,14 +7,15 @@ import java.util.Objects;
 
 public class ACLEntry {
     int resourceInode;
+    String resourceId;
     String resourceType;
 
     User owner;
 
     ArrayList<Permission> permissions;
 
-    public ACLEntry(int resourceInode, String resourceType, User owner, ArrayList<Permission> permissions){
-        this.resourceInode = resourceInode;
+    public ACLEntry(String resourceId, String resourceType, User owner, ArrayList<Permission> permissions){
+        this.resourceId = resourceId;
         this.resourceType = resourceType;
         this.owner = owner;
         this.permissions = permissions;
@@ -24,6 +25,9 @@ public class ACLEntry {
         return resourceInode;
     }
 
+    public String getResourceId() {
+        return resourceId;
+    }
 
     public boolean permit(Permissions permission, User user){
         // add data to acl file
