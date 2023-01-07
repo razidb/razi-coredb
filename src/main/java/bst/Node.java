@@ -44,6 +44,7 @@ public class Node <Key extends Comparable<Key>, Value>{
     }
 
     public int balance(){
+        // height(right) - height(left)
         return (right != null ? right.height : 0) - (left != null ? left.height : 0);
     }
 

@@ -4,11 +4,31 @@
         {
             "resource": {
                 "type": "collection",
-                "Inode": 29518593
+                "id": "test-test"
             },
             "owner": {
-                "_type": "user",
-                "id": ""
+                "type": "user",
+                "id": "aa153923-c399-41f0-a291-1985106e33f2"
+            },
+            "permissions": [
+                {
+                    "permission": "READ",
+                    "permit": ["aa153923-c399-41f0-a291-1985106e33f2"]
+                },
+                {
+                    "permission": "WRITE",
+                    "permit": []
+                }
+            ]
+        },
+        {
+            "resource": {
+                "type": "collection",
+                "id": "test-test2"
+            },
+            "owner": {
+                "type": "user",
+                "id": "aa153923-c399-41f0-a291-1985106e33f2"
             },
             "permissions": [
                 {
