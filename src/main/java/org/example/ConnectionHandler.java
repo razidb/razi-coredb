@@ -5,7 +5,10 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Arrays;
 
+import acl.Permission;
+import acl.Permissions;
 import auth.AuthController;
+import auth.User;
 import dataLayer.Resolver;
 import network.SocketOutputStreamHandler;
 import org.json.simple.JSONObject;
@@ -31,6 +34,8 @@ public class ConnectionHandler extends Thread {
     private DataOutputStream dataOutputStream;
     // json parser
     private JSONParser jsonParser;
+    // user data
+    private User user;
 
     ConnectionHandler(Socket client) throws IOException {
         // this msg will be printed only when a client is connected
@@ -77,28 +82,53 @@ public class ConnectionHandler extends Thread {
                 break;
             }
 
-            String dataString = socketInputStreamHandler.getData();
-            JSONObject query = (JSONObject) jsonParser.parse(String.valueOf(dataString));
-
-            // log received query
-            System.out.println("Received Query: " + query);
-
             // TODO: get database name and collection from request
-            String db_name = "test";
-            String collection_name = "test";
 
-            // query resolver
-            Resolver resolver = new Resolver(db_name, collection_name, operationType);
-            resolver.setQuery(query);
-            resolver.resolve();
-            // code status
-            int codeStatus = resolver.getCodeStatus();
+            String dataString = socketInputStreamHandler.getData();
+            JSONObject data = (JSONObject) jsonParser.parse(String.valueOf(dataString));
 
-            // log execution time
-            // TODO: create a logger and log query time
+            String db_name = (String) data.getOrDefault("database", null);
+            String collection_name = (String) data.getOrDefault("collection", null);
 
-            // get query result
-            Object query_result = resolver.getResult();
+            AuthController authController = AuthController.getAuthController();
+            Permissions permission = (
+                operationType == MainOperations.DELETE
+                || operationType == MainOperations.INSERT
+                || operationType == MainOperations.UPDATE ? Permissions.WRITE : Permissions.READ
+            );
+            boolean authorized = authController.getAcl().checkPermission(
+                db_name + "-" + collection_name, permission, this.user
+            );
+
+            int codeStatus = 0;
+            Object query_result = null;
+
+            if (authorized){
+                JSONObject query = (JSONObject) data.get("payload");
+
+                // log received query
+                System.out.println("Received Query: " + query);
+
+                // query resolver
+                Resolver resolver = new Resolver(db_name, collection_name, operationType);
+                resolver.setQuery(query);
+                resolver.resolve();
+
+                // code status
+                codeStatus = resolver.getCodeStatus();
+
+                // log execution time
+                // TODO: create a logger and log query time
+
+                // get query result
+                query_result = resolver.getResult();
+
+            }
+            else{
+                // ignore query and return authorization error
+                codeStatus = 400;
+                query_result = "unauthorized";
+            }
 
             // send result to client
             SocketOutputStreamHandler socketOutputStreamHandler = new SocketOutputStreamHandler(
@@ -114,7 +144,6 @@ public class ConnectionHandler extends Thread {
         // Expected Request Content:
         // - username (required)
         // - password (required)
-        // - database (optional)
 
         // Expected Response:
         // - successful authentication (ok)
@@ -141,6 +170,8 @@ public class ConnectionHandler extends Thread {
         // end the connection if authentication failed
         if (!isAuthenticated)
             end();
+
+        this.user = authController.getUserByUsername(username);
 
     }
 

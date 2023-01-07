@@ -27,6 +27,7 @@ public class BST<Key extends Comparable<Key>, Value>{
     }
 
     public void Insert(Key k, Value v) {
+        // facade method to call the recursive `insert`
         Node<Key, Value> node = new Node<Key, Value>(k,v);
         if (root == null){
             // this is the first node in the tree
@@ -35,6 +36,9 @@ public class BST<Key extends Comparable<Key>, Value>{
         else{
             this.root = insert(node, root);
         }
+
+        int leftHeight = root.left != null? root.left.height: 0;
+        int rightHeight = root.right != null? root.right.height: 0;
     }
 
     private Node<Key, Value> insert(Node<Key, Value> node, Node<Key, Value> parent){
@@ -181,13 +185,22 @@ public class BST<Key extends Comparable<Key>, Value>{
     }
 
     public Node<Key, Value> balance(Node<Key, Value> n) {
+        // tree is left heavy with left subtree height difference of -1
         if (n.balance() < -1 && n.left != null && n.left.balance() == -1) {
             return rotateRight(n);
-        } else if (n.balance() > 1 && n.right != null && n.right.balance() == 1) {
+        }
+        // tree is right heavy with right subtree height difference of 1
+        else if (n.balance() > 1 && n.right != null && n.right.balance() == 1) {
             return rotateLeft(n);
-        } else if (n.balance() < -1 && n.left != null && n.left.balance() == 1) {
+        }
+        // tree is left heavy with left subtree height difference of 1
+        // which means that left subtree is right heavy
+        else if (n.balance() < -1 && n.left != null && n.left.balance() == 1) {
             return rotateLeftRight(n);
-        } else if (n.balance() > 1 && n.right != null && n.right.balance() == -1) {
+        }
+        // tree is right heavy with right subtree height difference of -1
+        // which means that right subtree is left heavy
+        else if (n.balance() > 1 && n.right != null && n.right.balance() == -1) {
             return rotateRightLeft(n);
         }
         return n;
