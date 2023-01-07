@@ -91,7 +91,7 @@ public class Resolver {
             String main_operation,
             String parent_field
     ){
-        /*  Build the operation stack the contains a post-fix notation of the query  */
+        /*  Build the operation stack the contains a pre-fix notation of the query  */
 
         String main_op = "";
         if (sub_query instanceof JSONObject){

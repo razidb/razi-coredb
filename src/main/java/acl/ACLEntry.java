@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class ACLEntry {
-    int resourceInode;
     String resourceId;
     String resourceType;
 
@@ -19,10 +18,6 @@ public class ACLEntry {
         this.resourceType = resourceType;
         this.owner = owner;
         this.permissions = permissions;
-    }
-
-    public int getResourceInode() {
-        return resourceInode;
     }
 
     public String getResourceId() {

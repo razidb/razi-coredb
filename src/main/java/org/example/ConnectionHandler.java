@@ -83,9 +83,12 @@ public class ConnectionHandler extends Thread {
             }
 
             // TODO: get database name and collection from request
-            String db_name = "test";
-            String collection_name = "test";
-            String collectionId = "281deedc-728a-4355-a255-a8b52bd4190d";
+
+            String dataString = socketInputStreamHandler.getData();
+            JSONObject data = (JSONObject) jsonParser.parse(String.valueOf(dataString));
+
+            String db_name = (String) data.getOrDefault("database", null);
+            String collection_name = (String) data.getOrDefault("collection", null);
 
             AuthController authController = AuthController.getAuthController();
             Permissions permission = (
@@ -94,15 +97,14 @@ public class ConnectionHandler extends Thread {
                 || operationType == MainOperations.UPDATE ? Permissions.WRITE : Permissions.READ
             );
             boolean authorized = authController.getAcl().checkPermission(
-                collectionId, permission, this.user
+                db_name + "-" + collection_name, permission, this.user
             );
 
             int codeStatus = 0;
             Object query_result = null;
 
             if (authorized){
-                String dataString = socketInputStreamHandler.getData();
-                JSONObject query = (JSONObject) jsonParser.parse(String.valueOf(dataString));
+                JSONObject query = (JSONObject) data.get("payload");
 
                 // log received query
                 System.out.println("Received Query: " + query);
@@ -142,7 +144,6 @@ public class ConnectionHandler extends Thread {
         // Expected Request Content:
         // - username (required)
         // - password (required)
-        // - database (optional)
 
         // Expected Response:
         // - successful authentication (ok)
