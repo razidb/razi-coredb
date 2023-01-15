@@ -1,18 +1,18 @@
 package dataLayer;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Stack;
-import java.util.ArrayList;
-import java.util.logging.Logger;
-
 import document.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import queryParserLayer.clauses.BinaryOperation;
 import queryParserLayer.clauses.Operation;
 import queryParserLayer.clauses.Operations;
-import queryParserLayer.clauses.BinaryOperation;
 import queryParserLayer.operations.MainOperations;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Stack;
+import java.util.logging.Logger;
 
 
 public class Resolver {
@@ -29,6 +29,7 @@ public class Resolver {
 
     private int codeStatus;
     private Object result;
+    private QuerySet queryset;
 
     private Duration resolve_time;
 
@@ -49,6 +50,10 @@ public class Resolver {
 
     public Object getResult() {
         return result;
+    }
+
+    public QuerySet getQueryset() {
+        return queryset;
     }
 
     public int getCodeStatus() {
@@ -227,8 +232,9 @@ public class Resolver {
         Stack<Object> operation_stack = new Stack<>();
         this.buildOperationStack(operation_stack, query, "$AND", null);
         // resolve operation stack and get a query set
-        QuerySet querySet = this.resolveOperationStack(operation_stack, null, new ArrayList<>());
-        this.result = querySet.documents;
+        this.queryset = this.resolveOperationStack(operation_stack, null, new ArrayList<>());
+        this.result = this.queryset.documents;
+
     }
 
     private void handleInsert(){
