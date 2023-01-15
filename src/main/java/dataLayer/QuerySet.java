@@ -1,9 +1,9 @@
 package dataLayer;
 
 import document.Document;
-import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 
 class QuerySet {
@@ -79,5 +79,24 @@ class QuerySet {
 
         // assign result to current queryset
         this.documents = result;
+    }
+
+    @Override
+    public String toString() {
+        String str = "<QuerySet";
+        int count = count();
+        if (count <= 3 && count >= 1){
+            str = str + " " +  Arrays.toString(Arrays.copyOfRange(documents.toArray(), 0, count)) + ">";
+        }
+        else if(count > 3){
+            str = str
+                    + " "
+                    +  Arrays.toString(Arrays.copyOfRange(documents.toArray(), 0, 2)) + "\n"
+                    + " ...(remaining elements truncated)...>";
+        }
+        else{
+            str = str + " " + documents + ">";
+        }
+        return str;
     }
 }
