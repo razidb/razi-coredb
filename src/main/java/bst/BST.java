@@ -1,10 +1,18 @@
 package bst;
 
+import document.Document;
+
+import java.util.Objects;
+
 public class BST<Key extends Comparable<Key>, Value>{
     private Node<Key, Value> root;
 
     public BST() {
         root = null;
+    }
+
+    public Node<Key, Value> getRoot() {
+        return root;
     }
 
     Node<Key, Value> min(Node<Key, Value> node){
@@ -66,9 +74,76 @@ public class BST<Key extends Comparable<Key>, Value>{
     }
 
 
-    public Value delete(Key key){
+    public Value delete(Key key, String _id){
         // facade function to call delete on the root
-        return delete(key, root);
+        if (_id == null)
+            return delete(key, root);
+        else
+            return delete(key, _id, root);
+    }
+
+    private Value delete(Key k, String _id, Node<Key, Value> node){
+        // facade function to call delete on the root
+        Node<Key, Value> parent = null;
+        Node<Key, Value> target = null;
+
+        if (k.compareTo(node.key) == 0)
+            target = node;
+        else if (k.compareTo(node.key) > 0 && node.right != null) {
+            if (k.compareTo(node.right.key) == 0){
+                parent = node;
+                target = node.right;
+            }
+            else{
+                return delete(k, node.right);
+            }
+        }
+        else if (k.compareTo(node.key) < 0 && node.left != null) {
+            if (k.compareTo(node.left.key) == 0){
+                parent = node;
+                target = node.left;
+            }
+            else{
+                return delete(k, node.left);
+            }
+        }
+
+        // make sure target node is found
+        assert target != null;
+
+        Value targetValue = target.value;
+
+        String currentNodeId = ((Document) target.value).getId();
+        int valuesCount = target.values.size();
+
+        if (Objects.equals(currentNodeId, _id)){
+            // remove node with the specified id
+            if (valuesCount == 1){
+                // No values in the target node, delete it immediately
+                delete(target, parent);
+            }
+            else{
+                for(int i=0; i<valuesCount; i++){
+                    Document documentValue = (Document) target.values.get(i);
+                    if (Objects.equals(documentValue.getId(), _id)){
+                        target.values.remove(i);
+                        break;
+                    }
+                }
+                // set new target.value
+                target.value = target.values.get(0);
+            }
+        }
+        else{
+            for(int i=0; i<valuesCount; i++){
+                Document documentValue = (Document) target.values.get(i);
+                if (Objects.equals(documentValue.getId(), _id)){
+                    return target.values.get(i);
+                }
+            }
+        }
+
+        return targetValue;
     }
 
     private Value delete(Key k, Node<Key, Value> node){
@@ -108,9 +183,9 @@ public class BST<Key extends Comparable<Key>, Value>{
         // case 1: target is a leaf node
         if (target.left == null && target.right == null){
             // simply, disconnect it from parent's left or right
-            if (parent.left.key == target.key)
+            if (parent.left != null && parent.left.key == target.key)
                 parent.left = null;
-            else if (parent.right.key == target.key) {
+            else if (parent.right != null && parent.right.key == target.key) {
                 parent.right = null;
             }
             else {

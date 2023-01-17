@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class CollectionFileController {
@@ -20,6 +22,13 @@ public class CollectionFileController {
         this.collectionPath = collectionPath;
     }
 
+    private String getCollectionIndexesPath(){
+        return collectionPath + "/info.json";
+    }
+    private String getCollectionDataPath(){
+        return collectionPath + "/data.txt";
+    }
+
     public static boolean collectionExists(String collectionPath){
         File collectionFile = new File(collectionPath);
         return collectionFile.exists();
@@ -28,7 +37,6 @@ public class CollectionFileController {
         String collectionPath = PathManager.getCollectionPath(db, collection);
         return collectionExists(collectionPath);
     }
-
     public static void createCollection(String db, String collection) throws IOException {
         String collectionPath = PathManager.getCollectionPath(db, collection);
         boolean collectionExists = collectionExists(collectionPath);
@@ -43,7 +51,6 @@ public class CollectionFileController {
             file.flush();
         }
     }
-
     public static void renameCollection(String db, String collection, String updatedName){
         String collectionPath = PathManager.getCollectionPath(db, collection);
         File collectionDir = new File(collectionPath);
@@ -64,6 +71,107 @@ public class CollectionFileController {
         }
     }
 
+
+    // -------------------- NEW FILE FORMAT FUNCTIONS --------------------
+    public static boolean insertDocument(String collectionPath, Map<String, Object> data) throws IOException, ParseException {
+        String dataPath = collectionPath + "/data.txt";
+        Path path = Path.of(dataPath);
+        List<String> records = Files.readAllLines(path);
+        int recordsCount = records.size();
+
+        JSONParser jsonParser = new JSONParser();
+
+        String lastRecord = records.get(recordsCount - 1);
+        JSONObject lastRecordJson = (JSONObject) jsonParser.parse(lastRecord);
+
+        int lastRecordId = Integer.parseInt(lastRecordJson.get("_id").toString());
+        int newRecordId = lastRecordId + 1;
+        data.put("_id", newRecordId);
+
+        JSONObject newRecordJSON = new JSONObject(data);
+        records.add(newRecordJSON.toJSONString());
+
+        Files.write(path, records);
+        return true;
+    }
+    public static boolean deleteDocument(String collectionPath, int id) throws IOException, ParseException {
+
+        Path path = Path.of(collectionPath + "/data.txt");
+        List<String> lines = Files.readAllLines(path);
+
+        JSONParser jsonParser = new JSONParser();
+
+        int linesCount = lines.size();
+        int lowerBound = 0;
+        int upperBound = linesCount - 1;
+        int middleLineCount;
+
+        while (upperBound >= lowerBound){
+
+            middleLineCount = lowerBound + ((upperBound - lowerBound) / 2);
+            String middleLine  = lines.get(middleLineCount);
+            JSONObject middleLineJson = (JSONObject) jsonParser.parse(middleLine);
+
+            int middleLineId = Integer.parseInt(middleLineJson.get("_id").toString());
+
+            if (id > middleLineId){
+                lowerBound = middleLineCount + 1;
+            }
+            else if (id < middleLineId ){
+                upperBound = middleLineCount - 1;
+            }
+            else{
+                // id found
+                lines.remove(middleLineCount);
+                Files.write(path, lines);
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean updateDocument(String collectionPath, int id, Map<String, Object> data) throws IOException, ParseException {
+
+        Path path = Path.of(collectionPath + "/data.txt");
+        List<String> lines = Files.readAllLines(path);
+        JSONParser jsonParser = new JSONParser();
+
+        int linesCount = lines.size();
+        int lowerBound = 0;
+        int upperBound = linesCount - 1;
+        int middleLineCount;
+
+        while (upperBound >= lowerBound){
+
+            middleLineCount = lowerBound + ((upperBound - lowerBound) / 2);
+            String middleLine  = lines.get(middleLineCount);
+            JSONObject middleLineJson = (JSONObject) jsonParser.parse(middleLine);
+
+            int middleLineId = Integer.parseInt(middleLineJson.get("_id").toString());
+
+            if (id > middleLineId){
+                lowerBound = middleLineCount + 1;
+            }
+            else if (id < middleLineId ){
+                upperBound = middleLineCount - 1;
+            }
+            else{
+                // id found
+                data.put("_id", id);
+                JSONObject dataJson = new JSONObject(data);
+                lines.set(middleLineCount, dataJson.toJSONString());
+                Files.write(path, lines);
+                return true;
+            }
+        }
+        return false;
+    }
+    public List<String> getAllDocumentsNew() throws IOException {
+        String dataPath = collectionPath + "/data.txt";
+        Path path = Path.of(dataPath);
+        return Files.readAllLines(path);
+    }
+
+
     private static JSONArray getDocuments(String collectionPath) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
         JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
@@ -78,7 +186,6 @@ public class CollectionFileController {
         file.write(collection.toJSONString());
         file.flush();
     }
-
 
     private static boolean documentExists(JSONArray documents, String id){
         for (Object document : documents) {
@@ -98,7 +205,6 @@ public class CollectionFileController {
         documents.add(newDocument);
         writeDocumentsToCollection(collectionPath, documents);
     }
-
     public static void deleteDocument(String collectionPath, String id) throws IOException, ParseException {
         JSONArray documents = getDocuments(collectionPath);
         int documentIndex = -1;
@@ -114,7 +220,6 @@ public class CollectionFileController {
             writeDocumentsToCollection(collectionPath, documents);
         }
     }
-
     public static void updateDocument(String db, String collection, String id, HashMap<String, Object> data) throws IOException, ParseException {
         String collectionPath = PathManager.getCollectionPath(db, collection);
         JSONArray documents = getDocuments(collectionPath);
@@ -153,7 +258,7 @@ public class CollectionFileController {
         JSONArray documentsFromFile = (JSONArray) collection.getOrDefault("documents", new JSONArray());
         for (int i=0; i< documentsFromFile.size(); i++){
             JSONObject o = (JSONObject) documentsFromFile.get(i);
-            String _id = (String) o.get("_id");
+            String _id = String.valueOf(o.get("_id"));
             if (Objects.equals(_id, id)){
                 return o;
             }
@@ -166,7 +271,7 @@ public class CollectionFileController {
 
     public ArrayList<JSONObject> getIndexes() throws IOException, ParseException {
         JSONParser parser = new JSONParser();
-        JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
+        JSONObject collection = (JSONObject) parser.parse(new FileReader(getCollectionIndexesPath()));
         JSONObject defaultIndex = new JSONObject();
         return (ArrayList<JSONObject>) collection.getOrDefault("indexes", null);
 
@@ -174,8 +279,8 @@ public class CollectionFileController {
 
     public void createIndex(ArrayList<String> fields) throws IOException, ParseException {
         JSONParser parser = new JSONParser();
-        JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath));
-        FileWriter file = new FileWriter(collectionPath);
+        JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath + "/info.json"));
+        FileWriter file = new FileWriter(collectionPath + "/info.json");
         JSONArray indexesFromFile = (JSONArray) collection.getOrDefault("indexes", new JSONArray());
         JSONObject indexObject = new JSONObject();
         indexObject.put("fields", fields);
@@ -193,6 +298,25 @@ public class CollectionFileController {
         JSONArray indexesFromFile = (JSONArray) collection.getOrDefault("indexes", new JSONArray());
         for (int i=0; i<indexesFromFile.size(); i++){
             if (Objects.equals(indexesFromFile.get(i).toString(), field)){
+                indexesFromFile.remove(i);
+                break;
+            }
+        }
+        collection.put("indexes", indexesFromFile);
+        file.write(collection.toJSONString());
+        file.flush();
+    }
+
+    public void deleteIndex(ArrayList<String> fields) throws IOException, ParseException {
+        JSONParser parser = new JSONParser();
+        JSONObject collection = (JSONObject) parser.parse(new FileReader(collectionPath + "/info.json"));
+        FileWriter file = new FileWriter(collectionPath + "/info.json");
+
+        JSONArray indexesFromFile = (JSONArray) collection.getOrDefault("indexes", new JSONArray());
+        for (int i=0; i < indexesFromFile.size(); i++){
+            ArrayList<String> fieldsFromFile = (ArrayList<String>) ((JSONObject)indexesFromFile.get(i)).get("fields");
+            boolean matchingFields = fieldsFromFile.equals(fields);
+            if (matchingFields){
                 indexesFromFile.remove(i);
                 break;
             }

@@ -6,9 +6,8 @@ import collection.CollectionFileController;
 import collection.Index;
 import controller.DBController;
 import document.Document;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
+import org.json.simple.parser.JSONParser;
 import queryParserLayer.clauses.BinaryOperation;
 import queryParserLayer.clauses.Operation;
 
@@ -33,9 +32,9 @@ public class SelectionExecutor {
     public ArrayList<Document> execute(ArrayList<Operation> operations, boolean match_all){
         ArrayList<Document> result;
         // construct fields
-
         ArrayList<String> fields = new ArrayList<>();
-        ArrayList<String> values = new ArrayList<>();
+        ArrayList<Object> values = new ArrayList<>();
+
         for (Operation operation: operations){
             switch (operation.type) {
                 case EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL -> {
@@ -51,14 +50,15 @@ public class SelectionExecutor {
         // try to find an index for the passed field/s
         Index<String, Document> index = collectionController.findIndex(fields);
         if (index != null){
+            // construct a valid key
             ArrayList<String> value = new ArrayList<>();
             for (String v: index.getFields()){
                 int pos_of_v = fields.indexOf(v);
-                String corresponding_value = values.get(pos_of_v);
-                value.add(corresponding_value);
+                Object corresponding_value = values.get(pos_of_v);
+                value.add(String.valueOf(corresponding_value));
             }
             String value_str = String.join("-", value);
-            result = collectionController.getDocument(fields, value_str, index);
+            result = collectionController.getDocument(fields, value_str, index, null);
             System.out.println("Query from index");
         }
         else{
@@ -72,26 +72,41 @@ public class SelectionExecutor {
         return result;
     }
 
-    private ArrayList<Document> fullCollectionSearch(ArrayList<Operation> operations, boolean match_all){
+    private ArrayList<Document> fullCollectionSearch(ArrayList<Operation> operations, boolean match_all) {
         /* Do full collection search for not indexed fields */
         // operations ar ORed together
 
         DBController db_controller = DBController.getDbController();
         Collection collection = db_controller.getDatabase(this.db_name).getCollection(this.collection_name);
         CollectionFileController file_controller = new CollectionFileController(collection.getController().getPath());
-        JSONArray data = new JSONArray();
-        try{
-            data = file_controller.getAllDocuments();
-        } catch (IOException | ParseException ignored){}
 
-        Set<String> result_ids = new HashSet<>();
+        JSONParser jsonParser = new JSONParser();
+
+        ArrayList<String> data = new ArrayList<>();
+
+        try{
+            data = (ArrayList<String>) file_controller.getAllDocumentsNew();
+        } catch (IOException exception){
+            System.out.println(exception.getMessage());
+        }
+
+        Set<Long> result_ids = new HashSet<>();
         ArrayList<Document> result = new ArrayList<>();
 
-        for (Object o: data){
 
-            JSONObject document_data = (JSONObject) o;
-            String doc_id = (String) document_data.get("_id");
-            Document document = new Document(doc_id, document_data.toJSONString());
+
+        for (Object o: data){
+            JSONObject document_data = new JSONObject();
+            try{
+                document_data = (JSONObject) jsonParser.parse(String.valueOf(o));
+            }
+            catch (Exception e){
+                System.out.println(e.getMessage());
+            }
+
+            Object doc_id = document_data.get("_id");
+
+            Document document = new Document(doc_id.toString(), document_data.toJSONString());
             int operations_passed = 0;
             for (Operation operation: operations){
                 switch (operation.type) {
@@ -99,7 +114,7 @@ public class SelectionExecutor {
                         BinaryOperation binary_operation = (BinaryOperation) operation;
                         String field_name = binary_operation.operand1;
                         Object value = document_data.get(field_name);
-                        if (binary_operation.apply(value)){
+                        if (binary_operation.apply((Comparable<Object>) value)){
                             operations_passed++;
                         }
                     }
@@ -109,12 +124,12 @@ public class SelectionExecutor {
                 }
             }
             if (match_all && operations_passed == operations.size()){
-                if (result_ids.add(doc_id)){
+                if (result_ids.add((Long) doc_id)){
                     result.add(document);
                 }
             }
             else if (!match_all && operations_passed >= 1){
-                if (result_ids.add(doc_id)){
+                if (result_ids.add((Long) doc_id)){
                     result.add(document);
                 }
             }

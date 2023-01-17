@@ -26,6 +26,10 @@ public class Document {
         }
     }
 
+    public void setData(String data) {
+        this.data = data;
+    }
+
     @Override
     public String toString() {
         return this.data.toString();

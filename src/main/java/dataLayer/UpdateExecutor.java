@@ -3,6 +3,9 @@ package dataLayer;
 import collection.CollectionController;
 import controller.DBController;
 
+import java.util.Map;
+import java.util.Objects;
+
 public class UpdateExecutor {
     /* Responsible for executing optimized update operations over a set of documents */
     private String db_name;
@@ -35,5 +38,15 @@ public class UpdateExecutor {
 
         return 0;
 
+    }
+
+    public boolean execute(String _id, String dataType, Map<String, Object> data) throws Exception {
+        // replace old data with new data
+        if (Objects.equals(dataType, "document")){
+            this.collectionController.updateDocument(_id, data);
+        } else if (Objects.equals(dataType, "index")) {
+
+        }
+        return true;
     }
 }
