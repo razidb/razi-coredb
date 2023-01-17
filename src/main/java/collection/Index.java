@@ -17,6 +17,10 @@ public class Index<K extends Comparable<K>, V> {
         return fields;
     }
 
+    public BST<K, V> getBst() {
+        return bst;
+    }
+
     @Override
     public String toString() {
         return "Index{" +

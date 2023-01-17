@@ -25,6 +25,7 @@ public class InsertionExecutor {
             if (data instanceof JSONObject)
                 this.collectionController.addDocument((JSONObject) data);
             else if (data instanceof JSONArray) {
+                // bulk insertion
                 // TODO: implement
             }
         } else if (Objects.equals(dataType, "index")) {

@@ -29,7 +29,7 @@ public class Database {
 
     public Collection getCollection(String name){
         for (Collection collection: collections){
-            if ((name + ".json").equals(collection.getName()))
+            if ((name).equals(collection.getName()))
                 return collection;
         }
         return null;

@@ -11,8 +11,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import queryParserLayer.operations.MainOperations;
 
-import java.util.Objects;
-import java.util.Scanner;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 @Command(name = "razidb", version = "0.01", mixinStandardHelpOptions = true)
 public class Shell implements Runnable{
@@ -64,10 +65,10 @@ public class Shell implements Runnable{
             String operation = parts[0];
             String query = parts[1].split("\\)").length > 0? parts[1].split("\\)")[0]: null;
 
-            System.out.println(query);
+            // log query
+            System.out.println("Query: " + query);
 
             MainOperations mainOperation = null;
-
             JSONObject jsonQuery = new JSONObject();
 
             try{
@@ -102,11 +103,32 @@ public class Shell implements Runnable{
                 payload.put("payload", jsonQuery);
                 jsonQuery = payload;
             }
-
+            // index-related queries
+            else if (Objects.equals(operation, "createIndex")) {
+                mainOperation = MainOperations.INSERT;
+                JSONObject payload = new JSONObject();
+                payload.put("type", "index");
+                payload.put("payload", jsonQuery.get("fields"));
+                jsonQuery = payload;
+            }
+            else if (Objects.equals(operation, "deleteIndex")) {
+                mainOperation = MainOperations.DELETE;
+                JSONObject payload = new JSONObject();
+                payload.put("type", "index");
+                payload.put("payload", jsonQuery.get("fields"));
+                jsonQuery = payload;
+            }
 
             Resolver resolver = new Resolver(database, collection, mainOperation);
             resolver.setQuery(jsonQuery);
-            resolver.resolve();
+            try {
+                resolver.resolve();
+            } catch (Exception e) {
+                System.out.println("Something went wrong");
+                // System.out.println(e.getMessage());
+                throw new RuntimeException(e);
+
+            }
             System.out.println(resolver.getQueryset());
 
         }
@@ -119,8 +141,39 @@ public class Shell implements Runnable{
         return authenticated;
     }
 
+
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Shell()).execute(args);
+
+        if (false){
+            try{
+                List<String> records = Files.readAllLines(Path.of("db/data/test2/test/data.txt"));
+                for (int i=1; i<=1000000; i++){
+                    Map<String, Object> record = new HashMap<>();
+
+                    record.put("_id", i);
+                    record.put("username", "test" + i);
+                    record.put("firstName", "FirstName" + i);
+                    record.put("lastName", "LastName" + i);
+                    record.put("gender", i%2 == 0? "m": "f");
+                    record.put("faculty", "KASIT");
+                    record.put("department", i%8 == 0? "cs": i%10 == 0? "cis": "bit");
+                    record.put("creditHours", i%135);
+                    record.put("gpa", i%5);
+                    record.put("year", 2000 + i%23);
+                    record.put("status", i%4 == 0? "A": "I");
+
+                    JSONObject jsonRecord = new JSONObject(record);
+                    records.add(jsonRecord.toString());
+
+                }
+                Files.write(Path.of("db/data/test2/test/data.txt"), records);
+            } catch (Exception e){
+                System.out.println(e.getMessage());
+            }
+        }
+
+
         System.exit(exitCode);
     }
 }

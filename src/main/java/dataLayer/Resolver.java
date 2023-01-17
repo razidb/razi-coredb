@@ -11,6 +11,7 @@ import queryParserLayer.operations.MainOperations;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Stack;
 import java.util.logging.Logger;
 
@@ -43,6 +44,7 @@ public class Resolver {
         // initialize executors
         this.selectionExecutor = new SelectionExecutor(db, collection);
         this.insertionExecutor = new InsertionExecutor(db, collection);
+        this.updateExecutor = new UpdateExecutor(db, collection);
         this.deletionExecutor = new DeletionExecutor(db, collection);
         // get logger
         this.logger = Logger.getLogger(this.getClass().getName());
@@ -65,7 +67,7 @@ public class Resolver {
         this.query = query;
     }
 
-    public void resolve(){
+    public void resolve() throws Exception {
         /*  Responsible for resolving the query  */
         // 1- get the type of operation to be resolved
         // 2- call the method responsible for handling this operation
@@ -87,6 +89,7 @@ public class Resolver {
             logger.warning("unrecognized operation: " + operation);
         }
         this.resolve_time = Duration.between(start, Instant.now());
+        System.out.println("Total Count: " + ((ArrayList) getResult()).size());
         this.logger.info(operation + " query resolved in " + this.resolve_time.toMillis() + " milli seconds");
     }
 
@@ -101,11 +104,13 @@ public class Resolver {
         String main_op = "";
         if (sub_query instanceof JSONObject){
             main_op = "$AND";
-            // Make sure we know where this operation ends
-            operation_stack.push("END $AND");
+            if (main_operation != null){
+                // Make sure we know where this operation ends
+                operation_stack.push("END $AND");
+            }
             // iterate over keys
             for (Object o: ((JSONObject) sub_query).keySet()){
-                String key = (String) o;
+                String key = String.valueOf(o);
                 Object value = ((JSONObject) sub_query).get(key);
 
                 // keyword query starts with $ (ex: $AND, $lte, ...)
@@ -119,7 +124,7 @@ public class Resolver {
                     }
                     else{
                         // here what is left is lookups on a field (ex: $lt, $lte, ...)
-                        String operand = (String) value;
+                        Number operand = (Number) value;
                         Operations operation_type = null;
                         switch (key){
                             case "$lt" -> operation_type = Operations.LESS_THAN;
@@ -128,7 +133,7 @@ public class Resolver {
                             case "$gte" -> operation_type = Operations.GREATER_THAN_OR_EQUAL;
                         }
                         BinaryOperation binaryOperation = new BinaryOperation(
-                                operation_type, false, parent_field, operand
+                                operation_type, false, parent_field, (Comparable<Object>) operand
                         );
                         operation_stack.push(binaryOperation);
                     }
@@ -141,7 +146,7 @@ public class Resolver {
                     else{
                         // normal field lookup
                         BinaryOperation equalOperation = new BinaryOperation(
-                                Operations.EQUAL, false, key, (String) value
+                                Operations.EQUAL, false, key, (Comparable<Object>) value
                         );
                         operation_stack.push(equalOperation);
                     }
@@ -240,7 +245,7 @@ public class Resolver {
     private void handleInsert(){
         /* Facade method to handle insert operation */
         // get the type of data to insert
-        String dataType = (String) query.getOrDefault("type", null);
+        String dataType = String.valueOf(query.getOrDefault("type", null));
         Object payload = query.getOrDefault("payload", null);
         System.out.println(payload);
         if (dataType.equals("document")) {
@@ -254,14 +259,18 @@ public class Resolver {
 
     }
 
-    private void handleUpdate(){
+    private void handleUpdate() throws Exception {
         /* Facade method to handle update operation */
         // get the type of data to updated
-        String dataType = (String) query.getOrDefault("type", null);
-        Object payload = query.getOrDefault("payload", null);
-        System.out.println(payload);
+        String dataType = String.valueOf(query.getOrDefault("type", null));
+
+        Map<String, Object> payload = (Map) query.getOrDefault("payload", null);
+
         if (dataType.equals("document")) {
-            this.updateExecutor.execute(payload, dataType);
+            Map<String, Object> query = (Map<String, Object>) payload.get("query");
+            Map<String, Object> data = (Map<String, Object>) payload.get("values");
+            String _id = String.valueOf(query.get("_id"));
+            this.updateExecutor.execute(_id, dataType, data);
         } else if (dataType.equals("index")) {
             this.updateExecutor.execute(payload, dataType);
         }
@@ -272,14 +281,14 @@ public class Resolver {
 
     private void handleDeletion(){
         /* Facade method to handle delete operation */
-        String dataType = (String) query.getOrDefault("type", null);
-        JSONObject payload = (JSONObject) query.getOrDefault("payload", null);
-        String _id = (String) payload.getOrDefault("_id", null);
-        System.out.println(payload);
+        String dataType = String.valueOf(query.getOrDefault("type", null));
         if (dataType.equals("document")) {
+            JSONObject payload = (JSONObject) query.getOrDefault("payload", null);
+            String _id = String.valueOf(payload.getOrDefault("_id", null));
+            System.out.println(payload);
             this.deletionExecutor.execute(_id, null, dataType);
         } else if (dataType.equals("index")) {
-            this.deletionExecutor.execute(_id, null, dataType);
+            this.deletionExecutor.execute(null, (ArrayList<String>) query.get("payload"), dataType);
         }
         else {
             // invalid data type

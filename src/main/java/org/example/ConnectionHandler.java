@@ -1,21 +1,22 @@
 package org.example;
 
-import java.io.*;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Arrays;
-
-import acl.Permission;
 import acl.Permissions;
 import auth.AuthController;
 import auth.User;
 import dataLayer.Resolver;
+import network.SocketInputStreamHandler;
 import network.SocketOutputStreamHandler;
 import org.json.simple.JSONObject;
-import network.SocketInputStreamHandler;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import queryParserLayer.operations.MainOperations;
+
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Arrays;
 
 
 public class ConnectionHandler extends Thread {
@@ -60,10 +61,12 @@ public class ConnectionHandler extends Thread {
         } catch (IOException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
             System.out.println("Stack: " + Arrays.toString(e.getStackTrace()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private void handle() throws IOException, ParseException {
+    private void handle() throws Exception {
         // 1- REQUEST-TO-CONNECT
         this.handleRequestToConnect();
         // 2- Start Performing Queries
@@ -87,8 +90,8 @@ public class ConnectionHandler extends Thread {
             String dataString = socketInputStreamHandler.getData();
             JSONObject data = (JSONObject) jsonParser.parse(String.valueOf(dataString));
 
-            String db_name = (String) data.getOrDefault("database", null);
-            String collection_name = (String) data.getOrDefault("collection", null);
+            String db_name = String.valueOf(data.getOrDefault("database", null));
+            String collection_name = String.valueOf(data.getOrDefault("collection", null));
 
             AuthController authController = AuthController.getAuthController();
             Permissions permission = (
@@ -108,18 +111,12 @@ public class ConnectionHandler extends Thread {
 
                 // log received query
                 System.out.println("Received Query: " + query);
-
                 // query resolver
                 Resolver resolver = new Resolver(db_name, collection_name, operationType);
                 resolver.setQuery(query);
                 resolver.resolve();
-
                 // code status
                 codeStatus = resolver.getCodeStatus();
-
-                // log execution time
-                // TODO: create a logger and log query time
-
                 // get query result
                 query_result = resolver.getResult();
 
@@ -155,8 +152,8 @@ public class ConnectionHandler extends Thread {
         // get data from request
         String strAuthData = initSocketInputStreamHandler.getData();
         JSONObject authData = (JSONObject) jsonParser.parse(String.valueOf(strAuthData));
-        String username = (String) authData.getOrDefault("username", "default");
-        String password = (String) authData.getOrDefault("password", null);
+        String username = String.valueOf(authData.getOrDefault("username", "default"));
+        String password = String.valueOf(authData.getOrDefault("password", null));
         // authenticate
         AuthController authController = AuthController.getAuthController();
         boolean isAuthenticated = authController.authenticate(username, password);
